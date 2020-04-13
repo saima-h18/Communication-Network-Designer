@@ -1,0 +1,14 @@
+# this is a comment - skip lines starting with a hash
+#
+# number of nodes
+6
+#
+# symmetric reliability matrix - stored in row major form
+#
+0.94 0.91 0.96 0.93 0.92 0.94 0.97 0.91 0.92 0.94 0.90 0.94 0.93 0.96 0.91
+#
+# symmetric cost matrix - stored in row major form
+#
+12 25 8 20 30 30 5 25 30 20 40 10 30 10 30
+#
+# end 
