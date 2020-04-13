@@ -83,21 +83,6 @@ print(copyy.printGraph())
 tie_sets1 = copyy.generateTieSet(verbose=False)
 network.print_tie_set(tie_sets1)
 
-for key,val in tie_sets1.items():
-    print(key,val)
-
-# my_dict = dict(tie_sets1)
-# allNames = sorted(dict(tie_sets1))
-# combinations = it.product(*(my_dict[Name] for Name in allNames))
-# print(list(combinations))
-# comb = list(combinations)
-# print(comb)
-#
-# get length of values for each key
-# for x in tie_sets1:
-#     print(len(tie_sets1.get(x)))
-
-
 
 def swap(list):
     swappedresult = copy.deepcopy(list)
@@ -120,15 +105,13 @@ def Prob(twodlist):
     return product
 
 def findTotalProbability(dict):
-    print(dict)
     relarr = [[]]
     finalarr = [[]]
     for key in dict:
         for x in dict.get(key):
             relarr.append(x)
     relarr.pop(0)
-    print("rel")
-    print(relarr)
+
     copyofrelarr = copy.deepcopy(relarr)
     for indx,r in enumerate(copyofrelarr):
         if (r in copyofrelarr[indx+1:]) or (swap(r) in copyofrelarr[indx+1:]):
@@ -136,10 +119,7 @@ def findTotalProbability(dict):
         else:
             finalarr.append(r)
     finalarr.pop(0)
-    print("pp")
-    print(finalarr)
     probability = Prob(finalarr)
-    print(probability)
     return probability
 
 
@@ -153,9 +133,7 @@ def mergeDict(dict1, dict2):
 
 def transformintoonedict(dicto):
     initial = dicto[0]
-    print(initial)
     dicto = dicto[1:]
-    print(dicto)
     dict3 = defaultdict(list)
 
     for x in dicto:
@@ -167,73 +145,84 @@ def transformintoonedict(dicto):
     return dict3
 
 def pairsProbability(pairs):
-    print("ok")
-    total = 1
+    total = 0
     for x in pairs:
-        print(x)
-        print(type(x))
         onedict = transformintoonedict(x)
-        print(onedict)
-        print("pls")
-        print(onedict[0])
+
         for key,val in onedict.items():
-            print(val)
             onedict[key] = [e for sl in val for e in sl]
-        print("plswork")
-        print(onedict)
         plswork = findTotalProbability(onedict)
-        print(plswork)
-        total *= plswork
+        total += plswork
     return total
 
 def intersection(mydict):
-    print("hi")
-    print(mydict)
     res = str(mydict)[1:-1]
     res = "%s" % res
-    print(res)
     res = ast.literal_eval(res)
-    print("sss")
-    print(res)
-    print(type(res))
     allintersection = transformintoonedict(res)
-    print("hhhh")
-    print(allintersection)
+
     for key, val in allintersection.items():
-        print(val)
         allintersection[key] = [e for sl in val for e in sl]
-    print("prettypls")
-    print(allintersection)
+
     finallyw = findTotalProbability(allintersection)
-    print(finallyw)
     return finallyw
 
-
-def Union(mydict, pairs):
-    total = 1
+def Union(mydict):
+    total = 0
     for x in mydict:
-        print("x")
-        print(x)
         prob = findTotalProbability(x)
-        total *= prob
-    pairedprob = pairsProbability(pairs)
+        total += prob
+    for y in range(2, len(mydict)):
+        pairs = list(combinations(mydict, y))
+        pairedprob = pairsProbability(pairs)
+        if y % 2 == 0:
+            total -= pairedprob
+            added = False
+        else:
+            total += pairedprob
+            added = True
     interprob = intersection(mydict)
-    final = total - pairedprob + interprob
-    print(total)
-    print(pairedprob)
-    print(interprob)
+    if added == True:
+        final = total - interprob
+    else:
+        final = total + interprob
+
     return final
+
+for key,val in tie_sets1.items():
+    print(key,val)
 
 mydict = ([dict(zip(tie_sets1.keys(),v)) for v in it.product(*tie_sets1.values())])
 
-print([dict(zip(tie_sets1.keys(),v)) for v in it.product(*tie_sets1.values())])
-print("Here")
-print(mydict[0])
-print(len(mydict))
+# print([dict(zip(tie_sets1.keys(),v)) for v in it.product(*tie_sets1.values())])
+# print("Here")
+# print(mydict[0])
+# print(len(mydict))
+# 
+# print("yoyo")
+# print(mydict)
+# print(tie_sets1)
 
-print("yoyo")
-print(mydict)
-print(tie_sets1)
+finalreliability = Union(mydict)
+print("finalrel")
+print(finalreliability)
+
+
+
+# my_dict = dict(tie_sets1)
+# allNames = sorted(dict(tie_sets1))
+# combinations = it.product(*(my_dict[Name] for Name in allNames))
+# print(list(combinations))
+# comb = list(combinations)
+# print(comb)
+#
+# get length of values for each key
+# for x in tie_sets1:
+#     print(len(tie_sets1.get(x)))
+
+
+
+
 # for y in list(tie_sets1):
 #     print(y)
 #     probb = findTotalProbability(y)
@@ -242,14 +231,6 @@ print(tie_sets1)
     #     print(len(x))
     #     print(len(x.get(key)))
     #     print(x.get(key)[0])
-
-pairs = list(combinations(mydict,2))
-print(pairs)
-print(pairs[0])
-
-finalreliability = Union(mydict,pairs)
-print("finalrel")
-print(finalreliability)
 # for p in pairs:
 #     print("pls")
 #     print(p[0])
