@@ -5,6 +5,7 @@ import edge_generator
 # from tool_functions import *
 from graph import Graph
 from network import Network
+from reliability import Reliability
 from collections import defaultdict
 import copy
 import itertools as it
@@ -13,7 +14,7 @@ import json
 import ast
 from itertools import chain
 from collections import defaultdict
-
+import numpy as np
 '''
 input network 
 '''
@@ -22,7 +23,7 @@ try:
 # 	reliability_goal = input("Please enter reliability goal: ")
 # 	cost_constraint = input("Please enter cost constraint: ")
     file_path = 'input2.txt'
-    reliability_goal = 0.9
+    reliability_goal = 0.89
     cost_constraint = 100
 except(e):
     print(e)
@@ -77,213 +78,41 @@ print('\n\n------Tie Sets of MST------')
 tie_sets = mst.generateTieSet(verbose=False)
 network.print_tie_set(tie_sets)
 
+
+# Try one edge augmentation to MST
+
+# totaledgelist = [[]]
+# for p in edge_list:
+#     totaledgelist.append([network.city_letter_to_number[p.vertice_1],network.city_letter_to_number[p.vertice_2],p.getReliability(),p.getCost()])
+#     totaledgelist.append([network.city_letter_to_number[p.vertice_2],network.city_letter_to_number[p.vertice_1],p.getReliability(),p.getCost()])
+# totaledgelist.pop(0)
+# print(totaledgelist)
+#
+# for x in totaledgelist:
+#     if x or reliability.swap(x) not in result:
+#         copyy = copy.deepcopy(mst)
+#         copyy.addEdge(x[0],x[1],x[2],x[3])
+#         tie_sets1 = copyy.generateTieSet(verbose=False)
+#         network.print_tie_set(tie_sets1)
+#         print(copyy.printGraph())
+#         reliability = Reliability(tie_sets1)
+#         finalreliability = reliability.Union()
+#         print("finalrel")
+#         print(finalreliability)
+#         if finalreliability > reliability_goal:
+#             print(copyy.printGraph())
+#             print("final reliability is "+ str(finalreliability))
+#             break
+
 copyy = copy.deepcopy(mst)
-copyy.addEdge(network.city_letter_to_number[edge_list[14].vertice_2],network.city_letter_to_number[edge_list[14].vertice_1],edge_list[14].getReliability(),edge_list[14].getCost())
-print(copyy.printGraph())
+copyy.addEdge(network.city_letter_to_number[edge_list[14].vertice_1],network.city_letter_to_number[edge_list[14].vertice_2],edge_list[14].getReliability(),edge_list[14].getCost())
 tie_sets1 = copyy.generateTieSet(verbose=False)
 network.print_tie_set(tie_sets1)
-
-
-def swap(list):
-    swappedresult = copy.deepcopy(list)
-    tmp = swappedresult[0]
-    swappedresult[0] = swappedresult[1]
-    swappedresult[1] = tmp
-    return swappedresult
-
-def prodofList(arr):
-    prod = 1
-    for x in arr:
-        prod *= x
-    return prod
-
-def Prob(twodlist):
-    valarr=[]
-    for x in twodlist:
-        valarr.append(x[2])
-    product =  prodofList(valarr)
-    return product
-
-def findTotalProbability(dict):
-    relarr = [[]]
-    finalarr = [[]]
-    for key in dict:
-        for x in dict.get(key):
-            relarr.append(x)
-    relarr.pop(0)
-
-    copyofrelarr = copy.deepcopy(relarr)
-    for indx,r in enumerate(copyofrelarr):
-        if (r in copyofrelarr[indx+1:]) or (swap(r) in copyofrelarr[indx+1:]):
-            continue
-        else:
-            finalarr.append(r)
-    finalarr.pop(0)
-    probability = Prob(finalarr)
-    return probability
-
-
-def mergeDict(dict1, dict2):
-    ''' Merge dictionaries and keep values of common keys in list'''
-    dict3 = {**dict1, **dict2}
-    for key, value in dict3.items():
-        if key in dict1 and key in dict2:
-            dict3[key] = [value , dict1[key]]
-    return dict3
-
-def transformintoonedict(dicto):
-    initial = dicto[0]
-    dicto = dicto[1:]
-    dict3 = defaultdict(list)
-
-    for x in dicto:
-        # next = mergeDict(initial, x)
-        # initial = next
-        for k, v in chain(initial.items(), x.items()):
-            dict3[k].append(v)
-
-    return dict3
-
-def pairsProbability(pairs):
-    total = 0
-    for x in pairs:
-        onedict = transformintoonedict(x)
-
-        for key,val in onedict.items():
-            onedict[key] = [e for sl in val for e in sl]
-        plswork = findTotalProbability(onedict)
-        total += plswork
-    return total
-
-def intersection(mydict):
-    res = str(mydict)[1:-1]
-    res = "%s" % res
-    res = ast.literal_eval(res)
-    allintersection = transformintoonedict(res)
-
-    for key, val in allintersection.items():
-        allintersection[key] = [e for sl in val for e in sl]
-
-    finallyw = findTotalProbability(allintersection)
-    return finallyw
-
-def Union(mydict):
-    total = 0
-    for x in mydict:
-        prob = findTotalProbability(x)
-        total += prob
-    for y in range(2, len(mydict)):
-        pairs = list(combinations(mydict, y))
-        pairedprob = pairsProbability(pairs)
-        if y % 2 == 0:
-            total -= pairedprob
-            added = False
-        else:
-            total += pairedprob
-            added = True
-    interprob = intersection(mydict)
-    if added == True:
-        final = total - interprob
-    else:
-        final = total + interprob
-
-    return final
-
-for key,val in tie_sets1.items():
-    print(key,val)
-
-mydict = ([dict(zip(tie_sets1.keys(),v)) for v in it.product(*tie_sets1.values())])
-
-# print([dict(zip(tie_sets1.keys(),v)) for v in it.product(*tie_sets1.values())])
-# print("Here")
-# print(mydict[0])
-# print(len(mydict))
-# 
-# print("yoyo")
-# print(mydict)
-# print(tie_sets1)
-
-finalreliability = Union(mydict)
+print(copyy.printGraph())
+reliability = Reliability(tie_sets1)
+finalreliability = reliability.Union()
 print("finalrel")
 print(finalreliability)
-
-
-
-# my_dict = dict(tie_sets1)
-# allNames = sorted(dict(tie_sets1))
-# combinations = it.product(*(my_dict[Name] for Name in allNames))
-# print(list(combinations))
-# comb = list(combinations)
-# print(comb)
-#
-# get length of values for each key
-# for x in tie_sets1:
-#     print(len(tie_sets1.get(x)))
-
-
-
-
-# for y in list(tie_sets1):
-#     print(y)
-#     probb = findTotalProbability(y)
-
-    # for key in x:
-    #     print(len(x))
-    #     print(len(x.get(key)))
-    #     print(x.get(key)[0])
-# for p in pairs:
-#     print("pls")
-#     print(p[0])
-
-
-
-# def findUnion():
-
-
-# for x in mydict:
-#     print(x)
-
-# my_dict={'A':[[1,2]],'B':[[7,8],[9,4]],'C':[[3,5]]}
-# allNames = sorted(my_dict)
-# combinations = it.product(*(my_dict[Name] for Name in allNames))
-# combo =(list(combinations))
-# print(len(combo))
-
-# def isminimaltieset(tiesets1):
-#     for key,val in tiesets1.items():
-#         for x in val:
-#             print(x)
-#
-# isminimaltieset(tie_sets1)
-
-
-
-
-# swappedresult = copy.deepcopy(result)
-#
-# for indx,x in enumerate(swappedresult):
-#     tmp = x[0]
-#     swappedresult[indx][0] = x[1]
-#     swappedresult[indx][1] = tmp
-# print("ol")
-#
-# for key,val in tie_sets.items():
-#     mstcopy = copy.deepcopy(result)
-#     graph = Graph(len(city_list))
-#     val = [e for sl in val for e in sl]
-#     finalrel = network.augmentation(key,val,graph,edge_list, result, swappedresult,mstcopy)
-#     print(finalrel)
-
-
-
-
-## 1.3 TODO: evaluate all terminal reliability thru tie set
-# network.evaluate_relaibility_tie_set(tie_sets)
-
-## 1.4 # TODO: augment and evaluate augmented mst
-# augmented_mst = copy.deepcopy(mst)
-# R = Rall 
-# while(R < reliability_goal):
 
 
 
