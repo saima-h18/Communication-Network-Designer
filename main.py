@@ -107,14 +107,13 @@ network.print_tie_set_with_index(tie_sets)
 #             break
 
 # Copy MST
-copyy = copy.deepcopy(mst)
 
-# Add random Edge
+# Add 1 random Edge
 for edge in edge_list:
     print("----------\nAdd Edge:", [edge])
-    copyy = network.addEdgeList(copyy, [edge])
+    copyy = network.addEdgeList(copy.deepcopy(mst), [edge])
     tie_sets1 = copyy.generateTieSetWithIndex(verbose=False)
-    network.print_tie_set_with_index(tie_sets1)
+    # network.print_tie_set_with_index(tie_sets1)
     print("Augmented network:")
     copyy.printGraph()
 
@@ -124,24 +123,24 @@ for edge in edge_list:
     print("Reliability:")
     print(finalreliability)
 
+'''
+#### 2 edge augmentation
+# Add 2 random Edge
+from itertools import combinations
+for edges in combinations(edge_list, 2):
+    print("----------\nAdd Edge:", edges)
+    copyy = network.addEdgeList(copy.deepcopy(mst), edges)
+    tie_sets1 = copyy.generateTieSetWithIndex(verbose=False)
+    # network.print_tie_set_with_index(tie_sets1)
+    print("Augmented network:")
+    copyy.printGraph()
 
-# #### 2 edge augmentation
-# # Add random Edge
-# print("----------\nAdd Edge:", [edge_list[14]])
-# copyy = network.addEdgeList(copyy, [edge_list[14]])
-# print("Add Edge:", [edge_list[10]])
-# copyy = network.addEdgeList(copyy, [edge_list[10]])
-# tie_sets1 = copyy.generateTieSet(verbose=False)
-# # network.print_tie_set(tie_sets1)
-# print("Augmented network:")
-# copyy.printGraph()
-# #
-# # # Compute Reliability
-# reliability = Reliability(tie_sets1)
-# finalreliability = reliability.Union(depth = 10)
-# print("Reliability:")
-# print(finalreliability)
-
+    # Compute Reliability
+    reliability = Reliability(tie_sets1, copyy.graph)
+    finalreliability = reliability.Union()
+    print("Reliability:")
+    print(finalreliability)
+'''
 
 print('------------')
 
