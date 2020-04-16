@@ -32,7 +32,24 @@ class Network():
         print("Terminal Reliability of the MST is: %.2f" % (Rall))
         print("Total Cost of the MST is: %.2f" % (totalCost))
         return Rall, totalCost
-        
+
+    def print_tie_set_with_index(self, tie_sets):
+        for terminal, ts in tie_sets.items():
+            print("Tie-Sets to reach terminal:", self.city_number_to_letter[terminal])
+            for index, result in enumerate(ts):
+                print("TS " + self.city_number_to_letter[terminal] + str(index) + ":")
+                Rts = 1
+                totalCost = 0
+                # print the contents of result to display the detected Tie Set
+                for u, v, w, c, i  in result:
+                    c1 = self.city_number_to_letter[u]
+                    c2 = self.city_number_to_letter[v]
+                    Rts *= w
+                    totalCost += c
+                    print("Edge", i , ":", c1 + " -- " + c2 + " (%.2f, %.2f)" % (w, c))
+                print("Reliability of the TS is: %.2f" % (Rts))
+                print("Total Cost of the TS is: %.2f\n---" % (totalCost))
+
     def print_tie_set(self, tie_sets):
         for terminal, ts in tie_sets.items():
             print("Tie-Sets to reach terminal:", self.city_number_to_letter[terminal])
@@ -40,7 +57,7 @@ class Network():
                 print("TS "+self.city_number_to_letter[terminal]+str(index)+":")
                 Rts = 1
                 totalCost = 0
-                # print the contents of result to display the detected Tie Set 
+                # print the contents of result to display the detected Tie Set
                 for u,v,w,c in result:
                     c1 = self.city_number_to_letter[u]
                     c2 = self.city_number_to_letter[v]
@@ -93,7 +110,6 @@ class Network():
                 i += 1
         # g.clearVisted()
         return g
-
 
     def prodofList(self, arr):
         prod = 1

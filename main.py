@@ -75,8 +75,10 @@ mst = network.addEdgeList(mst,result)
 
 ## 1.2 Generate Tieset
 print('\n\n------Tie Sets of MST------')
-tie_sets = mst.generateTieSet(verbose=False)
-network.print_tie_set(tie_sets)
+# tie_sets = mst.generateTieSet(verbose=False)
+# network.print_tie_set(tie_sets)
+tie_sets = mst.generateTieSetWithIndex(verbose=False)
+network.print_tie_set_with_index(tie_sets)
 
 
 # Try one edge augmentation to MST
@@ -104,16 +106,41 @@ network.print_tie_set(tie_sets)
 #             print("final reliability is "+ str(finalreliability))
 #             break
 
+# Copy MST
 copyy = copy.deepcopy(mst)
-copyy.addEdge(network.city_letter_to_number[edge_list[14].vertice_1],network.city_letter_to_number[edge_list[14].vertice_2],edge_list[14].getReliability(),edge_list[14].getCost())
-tie_sets1 = copyy.generateTieSet(verbose=False)
-network.print_tie_set(tie_sets1)
-print(copyy.printGraph())
-reliability = Reliability(tie_sets1)
-finalreliability = reliability.Union()
-print("finalrel")
-print(finalreliability)
 
+# Add random Edge
+for edge in edge_list:
+    print("----------\nAdd Edge:", [edge])
+    copyy = network.addEdgeList(copyy, [edge])
+    tie_sets1 = copyy.generateTieSetWithIndex(verbose=False)
+    network.print_tie_set_with_index(tie_sets1)
+    print("Augmented network:")
+    copyy.printGraph()
+
+    # Compute Reliability
+    reliability = Reliability(tie_sets1, copyy.graph)
+    finalreliability = reliability.Union()
+    print("Reliability:")
+    print(finalreliability)
+
+
+# #### 2 edge augmentation
+# # Add random Edge
+# print("----------\nAdd Edge:", [edge_list[14]])
+# copyy = network.addEdgeList(copyy, [edge_list[14]])
+# print("Add Edge:", [edge_list[10]])
+# copyy = network.addEdgeList(copyy, [edge_list[10]])
+# tie_sets1 = copyy.generateTieSet(verbose=False)
+# # network.print_tie_set(tie_sets1)
+# print("Augmented network:")
+# copyy.printGraph()
+# #
+# # # Compute Reliability
+# reliability = Reliability(tie_sets1)
+# finalreliability = reliability.Union(depth = 10)
+# print("Reliability:")
+# print(finalreliability)
 
 
 print('------------')

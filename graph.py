@@ -117,6 +117,14 @@ class Graph:
 			w,c = e[2], e[3]
 			print(u,'--',v,w,c)
 
+	def printSetWithIndex(self,set):
+		for index, e in enumerate(set):
+			index = e[4]
+			u = alphabet_list[e[0]]
+			v = alphabet_list[e[1]]
+			w,c = e[2], e[3]
+			print('Edge:',index ,":" ,u,'--',v,w,c)
+
 # 	def clearVistied(self):
 # 	    self.visited = [0 for _ in range(len(self.graph))]
 
@@ -132,12 +140,13 @@ class Graph:
 	   # print("Routes:", routes)
 		return routes
 
-
 	def createRoute(self, starting_node, routes=[], route=[], visited=[], verbose = False):
 		"""
 		Append the edges that are attached to the current node to complete a terminal route
 
-		Calls itself recursively until the next connected nodes are all visited. A route is thus complete and the appended to the routes list which keeps track of all the terminal routes
+		Calls itself recursively until the next connected nodes are all visited.
+		A route is thus complete and the appended to the routes list
+		which keeps track of all the terminal routes
 
 		"""
 		connected_edges = self.findConnectedEdges(starting_node)
@@ -193,5 +202,83 @@ class Graph:
 		for route in routes:
 			u,v,w,c = route[-1]
 			tie_set[v].append(route)
-	   # print(tie_set.items())
+		# print(tie_set.values())
+		return tie_set
+
+
+
+	def allTerminalRoutesWithIndex(self, verbose = False):
+		"""
+		generate all possible routes from one fixed starting node in the network
+		"""
+		max_possible = 2**(len(self.graph))
+		terminal = 0
+		routes = []
+		starting_node = self.graph[0][0]
+		self.createRouteWithIndex(starting_node, routes, visited = [starting_node], verbose = verbose)
+	   # print("Routes:", routes)
+		return routes
+
+	def createRouteWithIndex(self, starting_node, routes=[], route=[], visited=[], verbose = False):
+		"""
+		Append the edges that are attached to the current node to complete a terminal route
+
+		Calls itself recursively until the next connected nodes are all visited.
+		A route is thus complete and the appended to the routes list
+		which keeps track of all the terminal routes
+
+		"""
+		connected_edges = self.findConnectedEdgesWithIndex(starting_node)
+		if(verbose):
+			print("Found Node", starting_node, 'in', connected_edges)
+			print("Have visited node:", visited)
+			print("Current Route:", route)
+		if (connected_edges == None ): # should never happen if MST
+			return route
+		else:
+			for (u,v,w,c,index) in connected_edges:
+				# check whether the next node (v) the edge points to is visited or not
+				if not(v in visited):
+					if(verbose):print('-------\nVisit Node', v)
+					# save a copy of visited so it does not affect the other routes in parallel
+					visited_copy = visited.copy()
+					visited_copy.append(v)
+					try:
+						# create a new branch of route by copying
+						route_copy = route.copy()
+						# append the new edge
+						route_copy.append([u,v,w,c,index])
+					except:
+						# except block to prevent error rising from empty route
+						route_copy=[[u,v,w,c,index]]
+					routes.append(self.createRouteWithIndex(v, routes,route_copy,visited_copy))
+			if(verbose):
+				print("Stop routing as all available nodes have been visitied")
+			return route
+
+	def findConnectedEdgesWithIndex(self, node):
+		"""
+		find all edges that are connected to the input node
+		"""
+		result = []
+		for index, (u,v,w,c) in enumerate(self.graph):
+			if u == node:
+				result.append([u,v,w,c,index])
+			elif v == node:
+				# reverse the edge direction such that the
+				# current node is always output as the first node,
+				#making the next node easier to index
+				result.append([v,u,w,c,index])
+		return result
+
+	def generateTieSetWithIndex(self,verbose):
+		"""
+		generate the tiesets from the terminal routes
+		"""
+		routes = self.allTerminalRoutesWithIndex(verbose=verbose)
+		tie_set = defaultdict(list)
+		for route in routes:
+			u,v,w,c,index = route[-1]
+			tie_set[v].append(route)
+		# print(tie_set.values())
 		return tie_set
