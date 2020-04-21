@@ -1,284 +1,168 @@
 import string
+
 alphabet_list = list(string.ascii_uppercase)
 from collections import defaultdict
+from edge import Edge
+import edge_generator
 
-# Class to represent a graph 
-class Graph: 
+class Graph:
 
-	## === Works Cited (line 17 - 103)===
-	# Geeksforgeeks.org: Kruskal’s Minimum Spanning Tree Algorithm | Greedy Algo-2
-	# Python program for Kruskal's algorithm to find
-	# Minimum Spanning Tree of a given connected,
-	# undirected and weighted graph
-	# This code is contributed by Neelam Yadav
-	# https://www.geeksforgeeks.org/kruskals-minimum-spanning-tree-algorithm-greedy-algo-2/
-	## ====================
+    ## === Works Cited (line 17 - 103)===
+    # Geeksforgeeks.org: Kruskal’s Minimum Spanning Tree Algorithm | Greedy Algo-2
+    # Contributed by Neelam Yadav
+    # https://www.geeksforgeeks.org/kruskals-minimum-spanning-tree-algorithm-greedy-algo-2/
+    ## ====================
 
-	def __init__(self,vertices): 
-		self.V= vertices #No. of vertices 
-		self.graph = [] # default dictionary 
-								# to store graph 
-# 		self.visited = [0 for _ in range(len(self.graph))]
-								
-	# function to add an edge to graph 
-	def addEdge(self,u,v,w,c): 
-		self.graph.append([u,v,w,c]) 
+    def __init__(self, nodes):
+        self.V = nodes
+        self.graph = []
 
-	# A utility function to find set of an element i 
-	# (uses path compression technique) 
-	def find(self, parent, i): 
-		if parent[i] == i: 
-			return i 
-		return self.find(parent, parent[i]) 
+    # find root of a particular set
+    def retrieve(self, parent, i):
+        if parent[i] == i:
+            return i
+        return self.retrieve(parent, parent[i])
 
-	# A function that does union of two sets of x and y 
-	# (uses union by rank) 
-	def union(self, parent, rank, x, y): 
-		xroot = self.find(parent, x) 
-		yroot = self.find(parent, y) 
+    # add an edge to the graph
+    def addEdge(self, start, end, r, c):
+        self.graph.append([start, end, r, c])
 
-		# Attach smaller rank tree under root of 
-		# high rank tree (Union by Rank) 
-		if rank[xroot] < rank[yroot]: 
-			parent[xroot] = yroot 
-		elif rank[xroot] > rank[yroot]: 
-			parent[yroot] = xroot 
+    # add new node to the root of the other node it is being unioned to
+    def join(self, parent, rank, x, y):
+        root1 = self.retrieve(parent, x)
+        root2 = self.retrieve(parent, y)
 
-		# If ranks are same, then make one as root 
-		# and increment its rank by one 
-		else : 
-			parent[yroot] = xroot 
-			rank[xroot] += 1
+        if rank[root1] < rank[root2]:
+            parent[root1] = root2
+        elif rank[root1] > rank[root2]:
+            parent[root2] = root1
+        else:
+            parent[root2] = root1
+            rank[root1] += 1
 
-	# The main function to construct MST using Kruskal's 
-		# algorithm 
-	def KruskalMST(self, type = 'reliability'): 
+    def spanningTree(self, type='reliability'):
 
-		result =[] #This will store the resultant MST 
+        # initializations
+        MST = []
+        parentarr = []
+        rankarr = []
+        # indices of the sorted graph and resulting spanning tree
+        indx1 = 0
+        indx2 = 0
 
-		i = 0 # An index variable, used for sorted edges 
-		e = 0 # An index variable, used for result[] 
+        if (type == 'reliability'):
+            # sort edges in decreasing order of reliability
+            self.graph = sorted(self.graph, key=lambda x: x[2], reverse=True)
+        else:
+            # sort edges in increasing order of reliability
+            self.graph = sorted(self.graph, key=lambda x: x[3], reverse=False)
 
-		# Step 1: Sort all the edges in decreasing 
-		# order of their weight. If we are not allowed to change
-		# the given graph, we can create a copy of graph 
-		if (type == 'reliability'):
-			print('Sorting in descending order of reliability...')
-			self.graph = sorted(self.graph, key = lambda x: x[2], reverse = True)
-		else:
-			print('Sorting in ascending order of cost...')
-			self.graph = sorted(self.graph, key = lambda x: x[3], reverse = False)
+        for node in range(self.V):
+            parentarr.append(node)
+            rankarr.append(0)
 
-		parent = [] ; rank = [] 
+        while indx2 < self.V - 1:
+            s, d, r, c = self.graph[indx1]
+            indx1 = indx1 + 1
+            x = self.retrieve(parentarr, s)
+            y = self.retrieve(parentarr, d)
+            # add edge to result if a loop is not formed
+            if x != y:
+                indx2 = indx2 + 1
+                MST.append([s, d, r, c])
+                self.join(parentarr, rankarr, x, y)
 
-		# Create V subsets with single elements 
-		for node in range(self.V): 
-			parent.append(node) 
-			rank.append(0) 
-	
-		# Number of edges to be taken is equal to V-1 
-		while e < self.V -1 : 
+        return MST
 
-			# Step 2: Pick the largest edge and increment 
-			# the index for next iteration 
-			u,v,w,c = self.graph[i] 
-			i = i + 1
-			x = self.find(parent, u) 
-			y = self.find(parent ,v) 
+    # ===== End of Works Cited ======
 
-			# If including this edge does't cause cycle, 
-			# include it in result and increment the index 
-			# of result for next edge 
-			if x != y: 
-				e = e + 1	
-				result.append([u,v,w,c]) 
-				self.union(parent, rank, x, y)			 
-			# Else discard the edge 
+    def printGraph(self, edge_list):
+        for index, e in enumerate(self.graph):
+            u = alphabet_list[e[0]]
+            v = alphabet_list[e[1]]
+            for edge in edge_list:
+                if (u == edge.vertice_1 and v == edge.vertice_2) or (u == edge.vertice_2 and v == edge.vertice_1):
+                    w, c = edge.getReliability(), edge.getCost()
+            print('Edge', index, ': ', u, '--', v, w, c)
 
-		# print the contents of result[] to display the built MST 
-		# print "Following are the edges in the constructed MST"
-# 		for u,v,weight in result: 
-# 			#print str(u) + " -- " + str(v) + " == " + str(weight) 
-# 			print ("%d -- %d == %.2f" % (u,v,weight)) 
-		return result
-	# ===== End of Works Cited ======
-	
-	def printGraph(self):
-		for index, e in enumerate(self.graph):
-			u = alphabet_list[e[0]]
-			v = alphabet_list[e[1]]
-			w,c = e[2], e[3]
-			print('Edge',index ,': ', u,'--',v,w,c)
+    def printSet(self, set):
+        for index, e in enumerate(set):
+            u = alphabet_list[e[0]]
+            v = alphabet_list[e[1]]
+            w, c = e[2], e[3]
+            print(u, '--', v, w, c)
 
-	def printSet(self,set):
-		for index, e in enumerate(set):
-			u = alphabet_list[e[0]]
-			v = alphabet_list[e[1]]
-			w,c = e[2], e[3]
-			print(u,'--',v,w,c)
+    # 	def clearVistied(self):
+    # 	    self.visited = [0 for _ in range(len(self.graph))]
 
-	def printSetWithIndex(self,set):
-		for index, e in enumerate(set):
-			index = e[4]
-			u = alphabet_list[e[0]]
-			v = alphabet_list[e[1]]
-			w,c = e[2], e[3]
-			print('Edge:',index ,":" ,u,'--',v,w,c)
-
-# 	def clearVistied(self):
-# 	    self.visited = [0 for _ in range(len(self.graph))]
-
-	def allTerminalRoutes(self, verbose = False):
-		"""
+    def allTerminalRoutes(self, x, verbose=False):
+        """
 		generate all possible routes from one fixed starting node in the network
 		"""
-		max_possible = 2**(len(self.graph))
-		terminal = 0
-		routes = []
-		starting_node = self.graph[0][0]
-		self.createRoute(starting_node, routes, visited = [starting_node], verbose = verbose)
-	   # print("Routes:", routes)
-		return routes
+        max_possible = 2 ** (len(self.graph))
+        terminal = 0
+        routes = []
+        # starting_node = self.graph[x][y]
+        starting_node = x
+        self.createRoute(starting_node, routes, visited=[starting_node], verbose=verbose)
+        return routes
 
-	def createRoute(self, starting_node, routes=[], route=[], visited=[], verbose = False):
-		"""
+    def createRoute(self, starting_node, routes=[], route=[], visited=[], verbose=False):
+        """
 		Append the edges that are attached to the current node to complete a terminal route
-
-		Calls itself recursively until the next connected nodes are all visited.
-		A route is thus complete and the appended to the routes list
-		which keeps track of all the terminal routes
-
+		Calls itself recursively until the next connected nodes are all visited. A route is thus complete
+		and the appended to the routes list which keeps track of all the terminal routes
 		"""
-		connected_edges = self.findConnectedEdges(starting_node)
-		if(verbose):
-			print("Found Node", starting_node, 'in', connected_edges)
-			print("Have visited node:", visited)
-			print("Current Route:", route)
-		if (connected_edges == None ): # should never happen if MST
-			return route
-		else:
-			for (u,v,w,c) in connected_edges:
-				# check whether the next node (v) the edge points to is visited or not
-				if not(v in visited):
-					if(verbose):print('-------\nVisit Node', v)
-					# save a copy of visited so it does not affect the other routes in parallel
-					visited_copy = visited.copy()
-					visited_copy.append(v)
-					try:
-						# create a new branch of route by copying
-						route_copy = route.copy()
-						# append the new edge
-						route_copy.append([u,v,w,c])
-					except:
-						# except block to prevent error rising from empty route
-						route_copy=[[u,v,w,c]]
-					routes.append(self.createRoute(v, routes,route_copy,visited_copy))
-			if(verbose):
-				print("Stop routing as all available nodes have been visitied")
-			return route
+        connected_edges = self.findConnectedEdges(starting_node)
+        if (verbose):
+            print("Found Node", starting_node, 'in', connected_edges)
+            print("Have visited node:", visited)
+            print("Current Route:", route)
+        if (connected_edges == None):  # should never happen if MST
+            return route
+        else:
+            for (u, v, w, c) in connected_edges:
+                # check whether the next node (v) the edge points to is visited or not
+                if not (v in visited):
+                    if (verbose): print('-------\nVisit Node', v)
+                    # save a copy of visited so it does not affect the other routes in parallel
+                    visited_copy = visited.copy()
+                    visited_copy.append(v)
+                    try:
+                        # create a new branch of route by copying
+                        route_copy = route.copy()
+                        # append the new edge
+                        route_copy.append([u, v, w, c])
+                    except:
+                        # except block to prevent error rising from empty route
+                        route_copy = [[u, v, w, c]]
+                    routes.append(self.createRoute(v, routes, route_copy, visited_copy))
+            if (verbose):
+                print("Stop routing as all available nodes have been visitied")
+            return route
 
-	def findConnectedEdges(self, node):
-		"""
+    def findConnectedEdges(self, node):
+        """
 		find all edges that are connected to the input node
 		"""
-		result = []
-		for   (u,v,w,c) in self.graph:
-			if u == node:
-				result.append([u,v,w,c])
-			elif v == node:
-				# reverse the edge direction such that the
-				# current node is always output as the first node,
-				#making the next node easier to index
-				result.append([v,u,w,c])
-		return result
+        result = []
+        for (u, v, w, c) in self.graph:
+            if u == node:
+                result.append([u, v, w, c])
+            elif v == node:
+                # reverse the edge direction such that the
+                # current node is always output as the first node,
+                # making the next node easier to index
+                result.append([v, u, w, c])
+        return result
 
-	def generateTieSet(self,verbose):
-		"""
-		generate the tiesets from the terminal routes
-
-		"""
-		routes = self.allTerminalRoutes(verbose=verbose)
-		tie_set = defaultdict(list)
-		for route in routes:
-			u,v,w,c = route[-1]
-			tie_set[v].append(route)
-		# print(tie_set.values())
-		return tie_set
-
-
-
-	def allTerminalRoutesWithIndex(self, verbose = False):
-		"""
-		generate all possible routes from one fixed starting node in the network
-		"""
-		max_possible = 2**(len(self.graph))
-		terminal = 0
-		routes = []
-		starting_node = self.graph[0][0]
-		self.createRouteWithIndex(starting_node, routes, visited = [starting_node], verbose = verbose)
-	   # print("Routes:", routes)
-		return routes
-
-	def createRouteWithIndex(self, starting_node, routes=[], route=[], visited=[], verbose = False):
-		"""
-		Append the edges that are attached to the current node to complete a terminal route
-
-		Calls itself recursively until the next connected nodes are all visited.
-		A route is thus complete and the appended to the routes list
-		which keeps track of all the terminal routes
-
-		"""
-		connected_edges = self.findConnectedEdgesWithIndex(starting_node)
-		if(verbose):
-			print("Found Node", starting_node, 'in', connected_edges)
-			print("Have visited node:", visited)
-			print("Current Route:", route)
-		if (connected_edges == None ): # should never happen if MST
-			return route
-		else:
-			for (u,v,w,c,index) in connected_edges:
-				# check whether the next node (v) the edge points to is visited or not
-				if not(v in visited):
-					if(verbose):print('-------\nVisit Node', v)
-					# save a copy of visited so it does not affect the other routes in parallel
-					visited_copy = visited.copy()
-					visited_copy.append(v)
-					try:
-						# create a new branch of route by copying
-						route_copy = route.copy()
-						# append the new edge
-						route_copy.append([u,v,w,c,index])
-					except:
-						# except block to prevent error rising from empty route
-						route_copy=[[u,v,w,c,index]]
-					routes.append(self.createRouteWithIndex(v, routes,route_copy,visited_copy))
-			if(verbose):
-				print("Stop routing as all available nodes have been visitied")
-			return route
-
-	def findConnectedEdgesWithIndex(self, node):
-		"""
-		find all edges that are connected to the input node
-		"""
-		result = []
-		for index, (u,v,w,c) in enumerate(self.graph):
-			if u == node:
-				result.append([u,v,w,c,index])
-			elif v == node:
-				# reverse the edge direction such that the
-				# current node is always output as the first node,
-				#making the next node easier to index
-				result.append([v,u,w,c,index])
-		return result
-
-	def generateTieSetWithIndex(self,verbose):
-		"""
+    def generateTieSet(self, x, verbose):
+        """
 		generate the tiesets from the terminal routes
 		"""
-		routes = self.allTerminalRoutesWithIndex(verbose=verbose)
-		tie_set = defaultdict(list)
-		for route in routes:
-			u,v,w,c,index = route[-1]
-			tie_set[v].append(route)
-		# print(tie_set.values())
-		return tie_set
+        routes = self.allTerminalRoutes(x, verbose=verbose)
+        tie_set = defaultdict(list)
+        for route in routes:
+            u, v, w, c = route[-1]
+            tie_set[v].append(route)
+        return tie_set
