@@ -5,7 +5,8 @@ def prodofList(arr):
         prod *= x
     return prod
 
-rel_ring = [0.94, 0.97, 0.96, 0.9919, 0.9919, 0.93]
+rel_ring = [1-pow(1-0.97,2), 1-pow(1-0.96,3),1-pow(1-0.94,3), 1-pow(1-0.91,3), 1-pow(1-0.93,3), 1-pow(1-0.91,3)]
+# rel_ring = [0.99,0.93,0.96,0.96,0.94]
 RelofLoop =prodofList(rel_ring)
 # add probabilities where one and only one edge fails
 for indx, r in enumerate(rel_ring):
@@ -16,4 +17,10 @@ for indx, r in enumerate(rel_ring):
     product = failure * tmp
     RelofLoop += product
 
+# print(RelofLoop*0.9984)
 print(RelofLoop)
+# 0.9999965812408375
+
+#0.9983958167067905
+#0.945275118336
+#0.9982508265745879

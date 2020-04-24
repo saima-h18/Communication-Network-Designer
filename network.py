@@ -1,6 +1,4 @@
 from edge import Edge
-# import copy
-
 
 class Network():
     def __init__(self, city_list):
@@ -28,7 +26,7 @@ class Network():
             c2 = self.city_number_to_letter[v]
             Rall *= weight
             totalCost += cost
-            print(c1 + " -- " + c2 + " (%.2f, %.2f) " % (weight, cost))
+            print(c1 + " <-> " + c2 + " (%.2f, %.2f) " % (weight, cost))
         print("Terminal Reliability of the MST is: %.2f" % (Rall))
         print("Total Cost of the MST is: %.2f" % (totalCost) + "\n")
         return Rall, totalCost
@@ -86,14 +84,6 @@ class Network():
         '''
         Augments an edge between each source and destination node for each tie set
         Finds the final reliability, cost and outputs the graph with the added edge
-
-        :param k: mst tie set terminal
-        :param v: mst tie set correponding to k stored in an array
-        :param graph: empty graph with size == #cities
-        :param edgelist: input edge list
-        :param result: mst edges stored in an array
-        :return: reliability of the augmented network, cost of the augmented network,
-                graph object of the augmented network
         '''
         # Initializations
         costs = []

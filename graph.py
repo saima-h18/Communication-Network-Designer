@@ -2,12 +2,11 @@ import string
 
 alphabet_list = list(string.ascii_uppercase)
 from collections import defaultdict
-from edge import Edge
-import edge_generator
+
 
 class Graph:
 
-    ## === Works Cited (line 17 - 103)===
+    ## === Works Cited (line 15 - 79)===
     # Geeksforgeeks.org: Kruskal’s Minimum Spanning Tree Algorithm | Greedy Algo-2
     # Contributed by Neelam Yadav
     # https://www.geeksforgeeks.org/kruskals-minimum-spanning-tree-algorithm-greedy-algo-2/
@@ -17,18 +16,18 @@ class Graph:
         self.V = nodes
         self.graph = []
 
-    # find root of a particular set
     def retrieve(self, parent, i):
+        '''find root of a particular set'''
         if parent[i] == i:
             return i
         return self.retrieve(parent, parent[i])
 
-    # add an edge to the graph
     def addEdge(self, start, end, r, c):
+        '''add an edge to the graph'''
         self.graph.append([start, end, r, c])
 
-    # add new node to the root of the other node it is being unioned to
     def join(self, parent, rank, x, y):
+        '''add new node to the root of the other node it is being unioned to'''
         root1 = self.retrieve(parent, x)
         root2 = self.retrieve(parent, y)
 
@@ -41,7 +40,7 @@ class Graph:
             rank[root1] += 1
 
     def spanningTree(self, type='reliability'):
-
+        ''' find minimum cost /maximum reliability spanning tree based on Kruskal's Algorithm '''
         # initializations
         MST = []
         parentarr = []
@@ -79,6 +78,31 @@ class Graph:
         return MST
 
     # ===== End of Works Cited ======
+    def printGraph_parallel(self, edge_list, store):
+        num_edges = []
+        edges = []
+        for x in self.graph:
+            num_edges.append(1)
+            edges.append([x[0], x[1]])
+
+        for x in store:
+            try:
+                indx = edges.index([x[0], x[1]])
+            except:
+                indx = edges.index([x[1], x[0]])
+            num_edges[indx] += 1
+
+        for index, e in enumerate(self.graph):
+            u = alphabet_list[e[0]]
+            v = alphabet_list[e[1]]
+            for edge in edge_list:
+                if (u == edge.vertice_1 and v == edge.vertice_2) or (u == edge.vertice_2 and v == edge.vertice_1):
+                    w, c = edge.getReliability(), edge.getCost()
+            if (num_edges[index] != 1):
+                print('Edge', index, ': ', u, '<->', v, w, c, ",", num_edges[index], "in parallel")
+            else:
+                print('Edge', index, ': ', u, '<->', v, w, c)
+        print("Total number of edges:", len(self.graph)+len(store))
 
     def printGraph(self, edge_list):
         for index, e in enumerate(self.graph):
@@ -87,17 +111,15 @@ class Graph:
             for edge in edge_list:
                 if (u == edge.vertice_1 and v == edge.vertice_2) or (u == edge.vertice_2 and v == edge.vertice_1):
                     w, c = edge.getReliability(), edge.getCost()
-            print('Edge', index, ': ', u, '--', v, w, c)
+            print('Edge', index, ': ', u, '<->', v, w, c)
+        print("Total number of edges:", len(self.graph))
 
     def printSet(self, set):
         for index, e in enumerate(set):
             u = alphabet_list[e[0]]
             v = alphabet_list[e[1]]
             w, c = e[2], e[3]
-            print(u, '--', v, w, c)
-
-    # 	def clearVistied(self):
-    # 	    self.visited = [0 for _ in range(len(self.graph))]
+            print(u, '<->', v, w, c)
 
     def allTerminalRoutes(self, x, verbose=False):
         """
