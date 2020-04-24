@@ -51,10 +51,14 @@ class Graph:
         indx2 = 0
 
         if (type == 'reliability'):
-            # sort edges in decreasing order of reliability
+            # 1. sort on secondary key: increasing order of cost
+            self.graph = sorted(self.graph, key=lambda x: x[3], reverse=False)
+            # 2. sort on primary key: decreasing order of reliability
             self.graph = sorted(self.graph, key=lambda x: x[2], reverse=True)
         else:
-            # sort edges in increasing order of reliability
+            # 1. sort on secondary key: decreasing order of reliability
+            self.graph = sorted(self.graph, key=lambda x: x[2], reverse=True)
+            # 2. sort on primary key: increasing order of cost
             self.graph = sorted(self.graph, key=lambda x: x[3], reverse=False)
 
         for node in range(self.V):

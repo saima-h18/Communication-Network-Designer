@@ -20,9 +20,9 @@ try:
 # 	file_path = input("Please set input file path: ")
 # 	reliability_goal = input("Please enter reliability goal: ")
 # 	cost_constraint = input("Please enter cost constraint: ")
-    file_path = 'input.txt'
+    file_path = 'input2.txt'
     reliability_goal = 0.95
-    cost_constraint = 130
+    cost_constraint = 100
 except(e):
     print(e)
     exit()
@@ -33,6 +33,9 @@ print('-------------------------')
 print("The list of cities in the network are: " + str(city_list))
 print("The cost and reliability between each city is shown below: ")
 print(edge_list)
+print("Design Specifications:")
+print("PART 1: Reliability Goal = ", reliability_goal)
+print("PART 2: Cost Constraint = ", cost_constraint)
 
 '''
 Task 1: Meet a given reliability goal
@@ -46,7 +49,7 @@ Task 1: Meet a given reliability goal
 print('-------------------------\n')
 print('PART 1: Meet a given reliability goal\n')
 
-def augmentationStage(result, mst, type = "1stpart"):
+def augmentationStage(mst, type ="1stpart"):
     '''
     The augmentationStage function takes in the spanning tree (for each part) as an argument and augments
     an edge to the spanning tree to increase the reliability of the system.
@@ -55,71 +58,74 @@ def augmentationStage(result, mst, type = "1stpart"):
     is then found. The reliability of the remaining edges in the spanning tree is then calculated along with
     the reliability of the loop to find the overall reliability of the system
     '''
-
+    # initialize mst graph to generate tie sets
+    mst_graph = Graph(len(city_list))
+    mst_graph = network.addEdgeList(mst_graph, mst)
+    finalrel = 0
+    finalCost = 0
+    finalGraph = copy.deepcopy(mst_graph)
     for r in range(0, len(city_list)-1):
         # configure tie sets from all nodes as sources
-        tie_sets = mst.generateTieSet(r, verbose = False)
-        # copy the spanning tree to check for swapped nodes (means its the same edge)
-        swappedresult = copy.deepcopy(result)
-        # generate edges with swapped nodes since those edges are equivalent (e.g. AB and BA are same edge)
-        for indx, x in enumerate(swappedresult):
-            tmp = x[0]
-            swappedresult[indx][0] = x[1]
-            swappedresult[indx][1] = tmp
+        tie_sets = mst_graph.generateTieSet(r, verbose = False)
         # iterate through each tie set
         for key, val in tie_sets.items():
-            mstcopy = copy.deepcopy(result)
             graph = Graph(len(city_list))
             # transform the tie set from a 3D list to a 2D list
             val = [e for sl in val for e in sl]
             # network.augmentation performs the actual augmentation
-            finalrel, finalCost, graph = network.augmentation(key, val, graph, edge_list, result, swappedresult, mstcopy)
-            # if this is the first part of the project justncheck if reliability goal is met otherwise check if
+            rel, cost, graph = network.augmentation(key, val, graph, edge_list, mst)
+            # if this is the first part of the project just check if reliability goal is met otherwise check if
             # both cost constraint and reliability is met
+            # print("Augment btw", network.city_number_to_letter[r], "and", network.city_number_to_letter[key], rel, cost)
             if type == "1stpart":
+                # update optimal solution
+                if (rel >= finalrel):
+                    finalrel, finalCost, finalGraph = rel, cost, graph
+                # return as soon as the reliability goal is met
                 if finalrel >= reliability_goal:
-                    return finalrel, finalCost, graph
-            else:
-                if finalrel >= reliability_goal and finalCost < cost_constraint:
-                    return finalrel, finalCost, graph
-    return finalrel, finalCost, graph
+                    return finalrel, finalCost, finalGraph
+            elif type == '2ndpart':
+                # update optimal solution
+                if (rel >= finalrel and cost <= cost_constraint):
+                    finalrel, finalCost, finalGraph = rel, cost, graph
+    # if type == '2ndpart':
+    #     print("Best Augment", finalrel, finalCost)
+    return finalrel, finalCost, finalGraph
 
-def parallelEdges(result, resultcopy, store, type ='1stpart'):
+def parallelEdges(result, original_result, store, type ='1stpart'):
     '''
     The parallelEdges function adds parallel edges to each edge to the spanning tree. This
     'new' spanning tree with better reliabilities is then sent to the augmentation stage again
     '''
-    arr = []
-    # append reliabilities for each edge to an array
-    for edge in result:
-        arr.append(edge[2])
+    result_sorted = copy.copy(result)
+    # 1. sort on secondary key: increasing order of cost
+    result_sorted = sorted(result_sorted, key=lambda x: x[3], reverse=False)
+    # 2. sort on primary key: increasing order of reliability
+    result_sorted = sorted(result_sorted, key=lambda x: x[2], reverse=False)
     # find the lowest reliability - this will be the one where parallel edges are added
-    lowest = min(arr)
+    lowest = result_sorted[0]
     # find the index of the lowest reliability
-    indx = arr.index(lowest)
+    indx = result.index(lowest)
     # find the reliability of a parallel edge added to the edge with lowest reliability
-    paralleledge = 1-pow((1-lowest),2)
+    paralleledge = 1-pow((1-lowest[2]),2)
+
 
     # the following is done to check how many parallel edges have been added to a particular edge
     # if a parallel edge has been detected, then the formula changes in accordance to how many
     # parallel edges are added to one edge
     # Only takes place with 3 or more parallel edges in one edge
     if result[indx][2] != resultcopy[indx][2]:
-        n = (math.log10(1-result[indx][2]))/(math.log10(1-resultcopy[indx][2]))
+        n = (math.log10(1-result[indx][2]))/(math.log10(1-original_result[indx][2]))
         paralleledge = 1 - pow((1 - lowest), n+1)
 
     # replace spanning tree with the new reliability
     result[indx][2] = paralleledge
 
-    # generate new graph object
-    mst = Graph(len(city_list))
-    mst = network.addEdgeList(mst,result)
-
     # perform augmentation step with new spanning tree
     if type == '1stpart':
-        reliability, cost, graph = augmentationStage(result, mst, type ='1stpart')
+        reliability, cost, graph = augmentationStage(result, type ='1stpart')
     else:
-        reliability, cost, graph = augmentationStage(result, mst, type ='2ndpart')
+        reliability, cost, graph = augmentationStage(result, type ='2ndpart')
 
     graphcopy = copy.deepcopy(graph)
     # append edges where a parallel edge was added - used to keep track of cost later on
@@ -135,16 +141,10 @@ g = network.addEdgeList(g, edge_list)
 
 # Generate Max reliability spanning tree through Kruskal's Algorithm
 result = g.spanningTree(type ='reliability')
-# create a copy of the spanning tree
+# make a copy of result
 resultcopy = copy.deepcopy(result)
 # Find the reliability and cost of the spanning tree
 Rall, totalCost = network.evaluate_network_mst(result, type = 'reliability')
-
-# initializations
-mst = Graph(len(city_list))
-mst = network.addEdgeList(mst,result)
-reliability = 0
-store = []
 
 # If reliability goal is met, just output the spanning tree
 if Rall >= reliability_goal:
@@ -154,7 +154,7 @@ if Rall >= reliability_goal:
     print("The cost of this system is " + str(Rall))
 # otherwise perform augmentation
 else:
-    relofaugmentedMST, costofaugmentedMST, graph = augmentationStage(result, mst, type='1stpart')
+    relofaugmentedMST, costofaugmentedMST, graph = augmentationStage(result, type='1stpart')
     if relofaugmentedMST >= reliability_goal:
         print("The final network design for Part 1 is made up of the following edges: ")
         graph.printGraph(edge_list)
@@ -162,9 +162,7 @@ else:
         print("The cost of this system is " + str(costofaugmentedMST))
     # if augmentation is not enough, add parallel edges
     else:
-        mst = Graph(len(city_list))
-        mst = network.addEdgeList(mst, result)
-        reliability = 0
+        reliability = Rall
         store = []
         while reliability < reliability_goal:
             result, reliability, cost, store, graphcopy = parallelEdges(result, resultcopy, store, type='1stpart')
@@ -192,70 +190,44 @@ print('PART 2: Maximize reliability subject to a given cost constraint\n')
 
 # Generate minimum cost spanning tree
 result = g.spanningTree(type ='cost')
-
-# initializations
+# make a copy of result
 resultcopy = copy.deepcopy(result)
-rel2, totalCost = network.evaluate_network_mst(result, type = 'cost')
-mst = Graph(len(city_list))
-mst = network.addEdgeList(mst,result)
-reliability = 0
-store = []
+# Find the reliability and cost of the spanning tree
+Rall, totalCost = network.evaluate_network_mst(result, type ='cost')
 
 # if cost constraint and reliability is already met, output spanning tree
-if totalCost < cost_constraint and rel2 > reliability_goal:
-    print("The minimum cost spanning tree meets the reliability goal along with the cost constraint")
-    print("The reliability of the system is %.4f" % (rel2))
+if totalCost >= cost_constraint:
+    print("The minimum cost spanning tree already meets/exceeds the cost constraint")
+    print("The final network design for Part 2 is made up of the following edges: ")
+    graph.printGraph(edge_list)
+    print("The reliability of the system is %.4f" % (Rall))
     print("The cost of the system is " + str(totalCost))
 
 # otherwise perform augmentation and if that is not enough, add parallel edges
-elif totalCost <= cost_constraint and rel2 < reliability_goal:
-    rel_2, cost1, graph1 = augmentationStage(result, mst, type='2ndpart')
-    rel_3 = rel_2
-    cost = cost1
-    if rel_2 < reliability_goal and cost1 <= cost_constraint:
-        mst = Graph(len(city_list))
-        mst = network.addEdgeList(mst, result)
-        reliability = 0
-        store = []
-
-        while rel_3 < reliability_goal and cost <= cost_constraint:
-            result, rel_3, cost, store, graphcopy = parallelEdges(result, resultcopy, store, type ='2ndpart')
-            for x in store:
-                cost += x[3]
-        for x in store:
-            graphcopy.addEdge(x[0], x[1], x[2], x[3])
-        if rel_3 < reliability_goal and cost <= cost_constraint:
-            print("The final network design for Part 2 is made up of the following edges: ")
-            graphcopy.printGraph(edge_list)
-            print("The reliability goal could not be met with the cost constraint")
-            print("The max reliability of the system that could be met is %.4f" % (rel_3))
-            print("with a cost of " + str(cost))
-        elif rel_3 >= reliability_goal and cost <= cost_constraint:
-            print("The final network design for Part 2 is made up of the following edges: ")
-            graphcopy.printGraph(edge_list)
-            print("The reliability goal is met with the cost constraint")
-            print("The reliability of the system is %.4f" % (rel_3))
-            print("The cost of the system is " + str(cost))
-    elif rel_2 < reliability_goal and cost1 <= cost_constraint:
-        print("The final network design for Part 2 is made up of the following edges: ")
-        graph1.printGraph(edge_list)
-        print("The reliability goal could not be met with the cost constraint")
-        print("The max reliability of the system that could be met is %.4f" % (rel_2))
-        print("with a cost of " + str(cost1))
-    elif rel_2 >= reliability_goal and cost1 <= cost_constraint:
-        print("The final network design for Part 2 is made up of the following edges: ")
-        graph1.printGraph(edge_list)
-        print("The reliability goal is met with the cost constraint")
-        print("The reliability of the system is %.4f" % (rel_2))
-        print("The cost of the system is " + str(cost1))
-    if cost > cost_constraint:
-        print("The final network design for Part 2 is made up of the following edges: ")
-        graph.printGraph(edge_list)
-        print("The cost constraint cannot be met")
-        print("The reliability of the minimum cost spanning tree is %.4f" % (rel2))
-        print("The cost of the minimum cost spanning tree is " + str(totalCost))
 else:
-    print("The cost constraint cannot be met")
-    print("The reliability of the minimum cost spanning tree is %.4f" % (rel2))
-    print("The cost of the minimum cost spanning tree is " + str(totalCost))
+    finalRel, finalCost, finalGraph = augmentationStage(result, type='2ndpart')
+    finalStore = []
+    cost = totalCost
+    while cost < cost_constraint:
+        # add parallel edges to the edge present in the network which has the lowest reliability
+        result, rel, cost, store, graph = parallelEdges(result, resultcopy, copy.copy(finalStore), type ='2ndpart')
+        for x in store:
+            cost += x[3]
+        # check whether cost is exceeded through the last edge addition
+        if cost > cost_constraint:
+            break
+        else:
+            finalStore = copy.copy(store)
+            finalRel = rel
+            finalCost = cost
+            finalGraph = copy.deepcopy(graph)
+    for x in finalStore:
+        finalGraph.addEdge(x[0], x[1], x[2], x[3])
+
+    print("The final network design for Part 2 is made up of the following edges: ")
+    finalGraph.printGraph(edge_list)
+    print("The reliability of the system is %.4f" % (finalRel))
+    print("The cost of the system is " + str(finalCost))
+
+
 
