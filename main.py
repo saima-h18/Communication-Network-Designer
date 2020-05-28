@@ -20,7 +20,7 @@ try:
 	file_path = input("Please set input file path: ")
 	reliability_goal = float(input("Please enter reliability goal: "))
 	cost_constraint = float(input("Please enter cost constraint: "))
-#     file_path = 'input.txt'
+#     file_path = '/testfiles/input.txt'
 #     reliability_goal = 0.95
 #     cost_constraint = 100
 except(e):
